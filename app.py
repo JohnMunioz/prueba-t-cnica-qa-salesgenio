@@ -104,11 +104,9 @@ key= getenv("OPENAI_API_KEY")
 with open("catalog.json") as file:
     catalog = json.load(file)
     
-    
-    
 
 
-client = openai.Client()
+client = openai.Client(api_key=key)
 thread = client.beta.threads.create()
 assistant = client.beta.assistants.create(
     name="Shopping Assistant",
@@ -194,13 +192,13 @@ with client.beta.threads.runs.stream(
 #         print("Chat is finished.")
 #         break
 #     response =client.beta.threads.messages.create(thread.id, role="user", content=user_input)
-    # with client.beta.threads.runs.stream(
-    #     thread_id= thread.id,
-    #     assistant_id=assistant.id,
-    #     event_handler=EventHandler(),
-    #     additional_instructions="You should help the user find the right product to buy and provide the information requested, you couldnt talk for another topics .",
-    # ) as stream:
-    #     stream.until_done()
+#     with client.beta.threads.runs.stream(
+#         thread_id= thread.id,
+#         assistant_id=assistant.id,
+#         event_handler=EventHandler(),
+#         additional_instructions="You should help the user find the right product to buy and provide the information requested, you couldnt talk for another topics .",
+#     ) as stream:
+#         stream.until_done()
 
 def chat_assistant(user_input=None):
     """Función para manejar la interacción con el asistente"""

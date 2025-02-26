@@ -1,0 +1,7 @@
+    {
+        "PRODUCT_ID": 21,
+        "Name": "Alienware X17",
+        "Description": "6.2-inch, 8GB RAM, 128GB Storagen",
+        "Price": 249,
+        "Stock_availabiility": 50
+    }
