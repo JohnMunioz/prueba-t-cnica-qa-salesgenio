@@ -177,13 +177,13 @@ assistant = client.beta.assistants.create(
 )
 
 
-with client.beta.threads.runs.stream(
-    thread_id= thread.id,
-    assistant_id=assistant.id,
-    instructions="Help the user find the right product to buy",
-    event_handler=EventHandler(),
-) as stream:
-  stream.until_done()
+# with client.beta.threads.runs.stream(
+#     thread_id= thread.id,
+#     assistant_id=assistant.id,
+#     instructions="Help the user find the right product to buy",
+#     event_handler=EventHandler(),
+# ) as stream:
+#   stream.until_done()
 
 
 # while True:
@@ -200,24 +200,45 @@ with client.beta.threads.runs.stream(
 #     ) as stream:
 #         stream.until_done()
 
-def chat_assistant(user_input=None):
-    """Función para manejar la interacción con el asistente"""
-    if user_input is None and "pytest" not in sys.modules:
-        user_input = input("\nuser > ")
-    
-    if user_input.strip().upper() == "END":
-        print("Chat is finished.")
-        return "Chat finished."
+def chat_assistant(user_input, thread_id=None):
+    """
+    Envía una solicitud al asistente de OpenAI y retorna la respuesta.
 
-    response = client.beta.threads.messages.create(thread.id, role="user", content=user_input)
-    with client.beta.threads.runs.stream(
-        thread_id=thread.id,
-        assistant_id=assistant.id,
-        event_handler=EventHandler(),
-        additional_instructions="You should help the user find the right product to buy and provide the information requested, you couldnt talk for another topics.",
-    ) as stream:
-        stream.until_done()
+    Parámetros:
+    - user_input (str): Mensaje del usuario.
+    - thread_id (str, opcional): ID del hilo existente. Si no se proporciona, se crea uno nuevo.
+
+    Retorna:
+    - str: Respuesta del asistente o un mensaje de error si la API no responde.
+    """
     
-    messages = client.beta.threads.messages.list(thread_id=thread.id)
-    last_message = messages.data[0]  # Último mensaje recibido
-    return last_message.content[0].text.value if last_message.content else ""
+    # Manejo de entrada vacía
+    if not user_input.strip():
+        return "Error: Input cannot be empty. Please provide a valid query."
+
+    try:
+        # Crear un nuevo hilo si no se proporciona uno
+        if thread_id is None:
+            thread = client.beta.threads.create()
+            thread_id = thread.id
+
+        # Enviar mensaje al asistente
+        client.beta.threads.messages.create(thread_id=thread_id, role="user", content=user_input)
+
+        # Procesar la respuesta del asistente
+        with client.beta.threads.runs.stream(
+            thread_id=thread_id,
+            assistant_id=assistant.id,
+            event_handler=EventHandler(),
+        ) as stream:
+            stream.until_done()
+
+        # Obtener la última respuesta del asistente
+        messages = client.beta.threads.messages.list(thread_id=thread_id)
+        last_message = messages.data[0] if messages.data else None
+
+        # Extraer el contenido del mensaje
+        return last_message.content[0].text.value if last_message and last_message.content else "No response from assistant."
+
+    except Exception as e:
+        return f"Error: Failed to retrieve response. Details: {str(e)}"
