@@ -188,16 +188,38 @@ with client.beta.threads.runs.stream(
   stream.until_done()
 
 
-while True:
-    user_input = input("\nuser > ")
+# while True:
+#     user_input = input("\nuser > ")
+#     if user_input.strip().upper() == "END":
+#         print("Chat is finished.")
+#         break
+#     response =client.beta.threads.messages.create(thread.id, role="user", content=user_input)
+    # with client.beta.threads.runs.stream(
+    #     thread_id= thread.id,
+    #     assistant_id=assistant.id,
+    #     event_handler=EventHandler(),
+    #     additional_instructions="You should help the user find the right product to buy and provide the information requested, you couldnt talk for another topics .",
+    # ) as stream:
+    #     stream.until_done()
+
+def chat_assistant(user_input=None):
+    """Función para manejar la interacción con el asistente"""
+    if user_input is None and "pytest" not in sys.modules:
+        user_input = input("\nuser > ")
+    
     if user_input.strip().upper() == "END":
         print("Chat is finished.")
-        break
-    response =client.beta.threads.messages.create(thread.id, role="user", content=user_input)
+        return "Chat finished."
+
+    response = client.beta.threads.messages.create(thread.id, role="user", content=user_input)
     with client.beta.threads.runs.stream(
-        thread_id= thread.id,
+        thread_id=thread.id,
         assistant_id=assistant.id,
         event_handler=EventHandler(),
-        additional_instructions="You should help the user find the right product to buy and provide the information requested, you couldnt talk for another topics .",
+        additional_instructions="You should help the user find the right product to buy and provide the information requested, you couldnt talk for another topics.",
     ) as stream:
         stream.until_done()
+    
+    messages = client.beta.threads.messages.list(thread_id=thread.id)
+    last_message = messages.data[0]  # Último mensaje recibido
+    return last_message.content[0].text.value if last_message.content else ""
